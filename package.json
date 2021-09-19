@@ -1,0 +1,27 @@
+{
+  "name": "logseq-plugin-block-to-page",
+  "version": "0.0.1",
+  "description": "turn block into page",
+  "main": "dist/index.html",
+  "scripts": {
+    "dev": "parcel ./index.html --public-url ./",
+    "build": "parcel build --public-url . --no-source-maps index.html"
+  },
+  "keywords": [
+    "logseq"
+  ],
+  "author": "hyrijk",
+  "devDependencies": {
+    "@semantic-release/git": "^9.0.0",
+    "@semantic-release/github": "^7.2.3",
+    "parcel": "2.0.0-beta.2",
+    "semantic-release": "^17.4.7",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "@logseq/libs": "^0.0.1-alpha.27"
+  },
+  "logseq": {
+    "id": "_olkce22ke"
+  }
+}
