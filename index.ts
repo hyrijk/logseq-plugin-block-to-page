@@ -1,15 +1,17 @@
 import "@logseq/libs";
-import {
-  BlockEntity,
-  BlockIdentity,
-  IBatchBlock,
-} from "@logseq/libs/dist/LSPlugin.user";
+import { BlockEntity, BlockIdentity } from "@logseq/libs/dist/LSPlugin.user";
+import { isSimpleBlock, toBatchBlocks } from "./util";
 
 async function main(blockId: string) {
   const block = await logseq.Editor.getBlock(blockId, {
     includeChildren: true,
   });
-  if (block === null) {
+  if (block === null || block.children?.length === 0) {
+    return;
+  }
+
+  if (!isSimpleBlock(block)) {
+    logseq.App.showMsg("block has properties or is multi-line", "warning");
     return;
   }
 
@@ -55,15 +57,12 @@ async function insertBatchBlock(
   srcBlock: BlockIdentity,
   blocks: BlockEntity[]
 ) {
-  // children: [] 会出错
-  const batchBlocks = blocks.map((c) => ({
-    content: c.content,
-    children: c.children?.length ? (c.children as IBatchBlock[]) : undefined,
-  }));
+  const batchBlocks = toBatchBlocks(blocks);
 
   debug("insertBatchBlock", srcBlock, batchBlocks);
   await logseq.Editor.insertBatchBlock(srcBlock, batchBlocks, {
     sibling: true,
+    before: false,
   });
 }
 

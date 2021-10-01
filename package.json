@@ -1,6 +1,6 @@
 {
   "name": "logseq-plugin-block-to-page",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "turn block into page",
   "main": "dist/index.html",
   "scripts": {
@@ -22,6 +22,7 @@
     "@logseq/libs": "^0.0.1-alpha.27"
   },
   "logseq": {
-    "id": "_olkce22ke"
+    "id": "logseq-block-to-page",
+    "icon": "./icon.png"
   }
 }
