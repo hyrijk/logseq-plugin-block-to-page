@@ -1,6 +1,6 @@
 import "@logseq/libs";
 import { BlockEntity, BlockIdentity } from "@logseq/libs/dist/LSPlugin.user";
-import { isSimpleBlock, toBatchBlocks } from "./util";
+import { toBatchBlocks } from "./util";
 
 async function main(blockId: string) {
   const block = await logseq.Editor.getBlock(blockId, {
@@ -10,13 +10,15 @@ async function main(blockId: string) {
     return;
   }
 
-  if (!isSimpleBlock(block)) {
-    logseq.App.showMsg("block has properties or is multi-line", "warning");
-    return;
+  const pageRegx = /^\[\[(.*)\]\]$/;
+  const firstLine = block.content.split("\n")[0].trim();
+  const pageName = firstLine.replace(pageRegx, "$1");
+
+  let newBlockContent = "";
+  if (!pageRegx.test(firstLine)) {
+    newBlockContent = block.content.replace(firstLine, `[[${firstLine}]]`);
   }
 
-  const pageRegx = /^\[\[(.*)\]\]$/;
-  const pageName = block.content.replace(pageRegx, "$1");
   await createPageIfNotExist(pageName);
 
   const srcBlock = await getLastBlock(pageName);
@@ -28,17 +30,23 @@ async function main(blockId: string) {
     }
 
     await removeBlocks(block.children as BlockEntity[]);
-    if (!pageRegx.test(block.content)) {
-      await logseq.Editor.updateBlock(block.uuid, `[[${block.content}]]`);
+    if (newBlockContent) {
+      await logseq.Editor.updateBlock(block.uuid, newBlockContent);
+      // propteties param not working...
+      // and then remove block property will undo updateBlock...
     }
     await insertBatchBlock(srcBlock.uuid, block.children as BlockEntity[]);
 
     if (srcBlock.content === "") {
-      // insertBatchBlock before 参数无效
+      // insertBatchBlock `before` param not working...
       await logseq.Editor.removeBlock(srcBlock.uuid);
     }
 
     await logseq.Editor.exitEditingMode();
+
+    if (block.properties.collapsed) {
+      await logseq.Editor.removeBlockProperty(block.uuid, "collapsed");
+    }
   }
 }
 

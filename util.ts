@@ -1,15 +1,5 @@
 import { BlockEntity } from "@logseq/libs/dist/LSPlugin.user";
 
-export function isSimpleBlock(block: BlockEntity) {
-  if (hasProperties(block)) {
-    return false;
-  }
-  if (block.content.includes("\n")) {
-    return false;
-  }
-  return true;
-}
-
 function hasProperties(block: BlockEntity) {
   const properties = block.meta?.properties || {};
   return Object.keys(properties).length > 0;
