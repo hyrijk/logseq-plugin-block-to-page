@@ -1,12 +1,17 @@
 import "@logseq/libs";
 import { BlockEntity, BlockIdentity } from "@logseq/libs/dist/LSPlugin.user";
-import { toBatchBlocks } from "./util";
+import { toBatchBlocks, mayBeReferenced } from "./util";
 
 async function main(blockId: string) {
   const block = await logseq.Editor.getBlock(blockId, {
     includeChildren: true,
   });
   if (block === null || block.children?.length === 0) {
+    return;
+  }
+  if (mayBeReferenced(block.children as BlockEntity[])) {
+    // https://github.com/hyrijk/logseq-plugin-block-to-page/issues/1
+    logseq.App.showMsg("some sub block may be referenced", "error");
     return;
   }
 
@@ -25,7 +30,7 @@ async function main(blockId: string) {
   if (srcBlock) {
     // page.format 为空
     if (srcBlock.format !== block.format) {
-      logseq.App.showMsg("page format not same", "warning");
+      logseq.App.showMsg("page format not same", "error");
       return Promise.reject("page format not same");
     }
 
@@ -44,7 +49,7 @@ async function main(blockId: string) {
 
     await logseq.Editor.exitEditingMode();
 
-    if (block.properties.collapsed) {
+    if (block.properties?.collapsed) {
       await logseq.Editor.removeBlockProperty(block.uuid, "collapsed");
     }
   }
