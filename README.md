@@ -1,4 +1,4 @@
-# Trun block into page
+# Turn block into page
 
 ## Slash command
 
