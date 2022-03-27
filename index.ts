@@ -9,11 +9,6 @@ async function main(blockId: string) {
   if (block === null || block.children?.length === 0) {
     return;
   }
-  if (mayBeReferenced(block.children as BlockEntity[])) {
-    // https://github.com/hyrijk/logseq-plugin-block-to-page/issues/1
-    logseq.App.showMsg("some sub block may be referenced", "error");
-    return;
-  }
 
   const pageRegx = /^\[\[(.*)\]\]$/;
   const firstLine = block.content.split("\n")[0].trim();
@@ -28,25 +23,32 @@ async function main(blockId: string) {
 
   const srcBlock = await getLastBlock(pageName);
   if (srcBlock) {
-    // page.format 为空
-    if (srcBlock.format !== block.format) {
-      logseq.App.showMsg("page format not same", "error");
-      return Promise.reject("page format not same");
+    const children = block.children as BlockEntity[];
+    let targetUUID = srcBlock.uuid;
+    for (let i = 0; i < children.length; i++) {
+      try {
+        await logseq.Editor.moveBlock(children[i].uuid, targetUUID, {
+          children: false,
+          before: false,
+        });
+        targetUUID = children[i].uuid;
+      } catch (error) {
+        console.error("moveBlock error", error);
+        logseq.App.showMsg("move block error", "error");
+        return;
+      }
     }
 
-    await removeBlocks(block.children as BlockEntity[]);
-    if (newBlockContent) {
-      await logseq.Editor.updateBlock(block.uuid, newBlockContent);
-      // propteties param not working...
-      // and then remove block property will undo updateBlock...
-    }
-    await insertBatchBlock(srcBlock.uuid, block.children as BlockEntity[]);
-
+    // remove first line.
     if (srcBlock.content === "") {
-      // insertBatchBlock `before` param not working...
       await logseq.Editor.removeBlock(srcBlock.uuid);
     }
 
+    if (newBlockContent) {
+      await logseq.Editor.updateBlock(block.uuid, newBlockContent);
+      // properties param not working...
+      // and then remove block property will undo updateBlock...
+    }
     await logseq.Editor.exitEditingMode();
 
     if (block.properties?.collapsed) {
@@ -65,19 +67,6 @@ logseq
     });
   })
   .catch(console.error);
-
-async function insertBatchBlock(
-  srcBlock: BlockIdentity,
-  blocks: BlockEntity[]
-) {
-  const batchBlocks = toBatchBlocks(blocks);
-
-  debug("insertBatchBlock", srcBlock, batchBlocks);
-  await logseq.Editor.insertBatchBlock(srcBlock, batchBlocks, {
-    sibling: true,
-    before: false,
-  });
-}
 
 async function createPageIfNotExist(pageName: string) {
   let page = await logseq.Editor.getPage(pageName);
@@ -105,13 +94,6 @@ async function createPageIfNotExist(pageName: string) {
         }
       );
     }
-  }
-}
-
-async function removeBlocks(blocks: BlockEntity[]) {
-  for (let i = 0; i < blocks.length; i++) {
-    const child = blocks[i];
-    await logseq.Editor.removeBlock(child.uuid);
   }
 }
 

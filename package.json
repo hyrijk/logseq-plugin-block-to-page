@@ -1,6 +1,6 @@
 {
   "name": "logseq-plugin-block-to-page",
-  "version": "0.0.5",
+  "version": "1.3.0",
   "description": "turn block into page",
   "main": "dist/index.html",
   "scripts": {
