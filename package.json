@@ -19,7 +19,8 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "@logseq/libs": "^0.0.1-alpha.27"
+    "@logseq/libs": "^0.0.15",
+    "dayjs": "^1.11.10"
   },
   "logseq": {
     "id": "logseq-block-to-page",

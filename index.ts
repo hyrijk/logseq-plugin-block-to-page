@@ -1,6 +1,8 @@
 import "@logseq/libs";
 import { BlockEntity, BlockIdentity } from "@logseq/libs/dist/LSPlugin.user";
-import { toBatchBlocks, mayBeReferenced } from "./util";
+
+import { toBatchBlocks, mayBeReferenced, formatPageName } from "./util";
+import { settings } from "./settings";
 
 async function main(blockId: string) {
   const block = await logseq.Editor.getBlock(blockId, {
@@ -13,15 +15,19 @@ async function main(blockId: string) {
   const pageRegx = /^\[\[(.*)\]\]$/;
   const firstLine = block.content.split("\n")[0].trim();
   const pageName = firstLine.replace(pageRegx, "$1");
+  const formattedPageName = formatPageName(pageName);
 
   let newBlockContent = "";
   if (!pageRegx.test(firstLine)) {
-    newBlockContent = block.content.replace(firstLine, `[[${firstLine}]]`);
+    newBlockContent = block.content.replace(
+      firstLine,
+      `[[${formattedPageName}]]`
+    );
   }
 
-  await createPageIfNotExist(pageName);
+  await createPageIfNotExist(formattedPageName);
 
-  const srcBlock = await getLastBlock(pageName);
+  const srcBlock = await getLastBlock(formattedPageName);
   if (srcBlock) {
     const children = block.children as BlockEntity[];
     let targetUUID = srcBlock.uuid;
@@ -59,6 +65,9 @@ async function main(blockId: string) {
 
 logseq
   .ready(() => {
+    // 注册设置项
+    logseq.useSettingsSchema(settings);
+
     logseq.Editor.registerSlashCommand("Turn Into Page", async (e) => {
       main(e.uuid);
     });
